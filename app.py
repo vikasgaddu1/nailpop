@@ -16,7 +16,7 @@ import json
 
 # Import our enhanced detection models
 from models import CrackDetector, NailPopDetector, ColorAnalyzer
-from services import get_drive_service, is_drive_available
+from services import get_drive_service, is_drive_available, get_available_providers, analyze_with_ai
 from components import camera_selector, process_camera_result
 
 # Configure page for mobile optimization
@@ -249,6 +249,12 @@ def main():
         st.session_state.captured_image = None
     if 'camera_info' not in st.session_state:
         st.session_state.camera_info = {}
+    if 'ai_analysis_mode' not in st.session_state:
+        st.session_state.ai_analysis_mode = 'Basic Computer Vision'
+    if 'openai_api_key' not in st.session_state:
+        st.session_state.openai_api_key = ''
+    if 'gemini_api_key' not in st.session_state:
+        st.session_state.gemini_api_key = ''
     
     # Image capture section
     st.markdown("### 📸 Capture or Upload Wall Image")
@@ -273,6 +279,68 @@ def main():
         - Avoid shadows and reflections
         - Higher megapixel count = better defect detection
         """)
+    
+    # AI Analysis Configuration (Mobile-friendly)
+    with st.expander("🧠 AI Analysis Settings", expanded=False):
+        st.markdown("**Choose your analysis method:**")
+        
+        # Analysis mode selection
+        analysis_mode = st.radio(
+            "Analysis Method:",
+            [
+                "🔧 Basic Computer Vision (Free)",
+                "🤖 OpenAI GPT-4V (Requires API Key)",
+                "🔮 Google Gemini Pro Vision (Requires API Key)"
+            ],
+            key="analysis_mode_radio",
+            help="Basic analysis is free but limited. AI models provide professional-grade analysis."
+        )
+        
+        # Update session state
+        if analysis_mode.startswith("🤖"):
+            st.session_state.ai_analysis_mode = "OpenAI GPT-4V"
+        elif analysis_mode.startswith("🔮"):
+            st.session_state.ai_analysis_mode = "Google Gemini Pro Vision"
+        else:
+            st.session_state.ai_analysis_mode = "Basic Computer Vision"
+        
+        # API Key inputs for external providers
+        if st.session_state.ai_analysis_mode == "OpenAI GPT-4V":
+            st.markdown("#### 🔑 OpenAI Configuration")
+            openai_key = st.text_input(
+                "OpenAI API Key:",
+                type="password",
+                value=st.session_state.openai_api_key,
+                help="Get your API key from https://platform.openai.com/api-keys",
+                placeholder="sk-..."
+            )
+            st.session_state.openai_api_key = openai_key
+            
+            if openai_key:
+                st.success("✅ OpenAI API key configured")
+                st.info("💡 **GPT-4V Benefits**: Professional building inspection analysis, detailed repair recommendations, cost estimates")
+            else:
+                st.warning("⚠️ Please enter your OpenAI API key to use GPT-4V analysis")
+        
+        elif st.session_state.ai_analysis_mode == "Google Gemini Pro Vision":
+            st.markdown("#### 🔑 Google Gemini Configuration")
+            gemini_key = st.text_input(
+                "Gemini API Key:",
+                type="password",
+                value=st.session_state.gemini_api_key,
+                help="Get your API key from https://makersuite.google.com/app/apikey",
+                placeholder="AIza..."
+            )
+            st.session_state.gemini_api_key = gemini_key
+            
+            if gemini_key:
+                st.success("✅ Gemini API key configured")
+                st.info("💡 **Gemini Benefits**: Advanced visual analysis, detailed damage assessment, practical repair advice")
+            else:
+                st.warning("⚠️ Please enter your Gemini API key to use Gemini Pro Vision analysis")
+        
+        else:
+            st.info("🔧 **Basic Analysis**: Uses computer vision algorithms for crack, nail pop, and color analysis. Free but limited compared to AI models.")
     
     # Camera mode selection
     camera_mode = st.radio(
@@ -377,33 +445,79 @@ def main():
             else:
                 st.info(quality_info)
         
-        # Analysis button
-        if st.button("🔍 Analyze Wall Defects", key="analyze_btn"):
-            with st.spinner("Analyzing image for defects..."):
-                # Perform comprehensive analysis
-                crack_results, nail_pop_results, color_results = analyze_wall_image(image)
-                
-                # Create annotated image
-                annotated_image = create_comprehensive_annotation(
-                    image, crack_results, nail_pop_results, color_results
-                )
-                
-                # Store results in session state
-                st.session_state.analysis_complete = True
-                st.session_state.detected_issues = {
-                    'cracks': crack_results['count'],
-                    'crack_severity': crack_results['severity'],
-                    'crack_length': crack_results['total_length'],
-                    'nail_pops': nail_pop_results['count'],
-                    'nail_pop_severity': nail_pop_results['severity'],
-                    'water_damage_pixels': color_results['water_damage_pixels'],
-                    'color_inconsistency_pixels': color_results['color_inconsistency_pixels'],
-                    'color_severity': color_results['severity']
-                }
-                st.session_state.annotated_image = annotated_image
-                st.session_state.crack_results = crack_results
-                st.session_state.nail_pop_results = nail_pop_results
-                st.session_state.color_results = color_results
+        # Analysis button with dynamic text based on selected AI
+        analysis_button_text = {
+            'Basic Computer Vision': '🔍 Analyze Wall Defects (Basic)',
+            'OpenAI GPT-4V': '🤖 Analyze with GPT-4V (Professional)',
+            'Google Gemini Pro Vision': '🔮 Analyze with Gemini Pro Vision'
+        }
+        
+        button_text = analysis_button_text.get(st.session_state.ai_analysis_mode, '🔍 Analyze Wall Defects')
+        
+        if st.button(button_text, key="analyze_btn"):
+            # Check if AI provider is properly configured
+            can_analyze = True
+            error_message = ""
+            
+            if st.session_state.ai_analysis_mode == "OpenAI GPT-4V" and not st.session_state.openai_api_key:
+                can_analyze = False
+                error_message = "Please configure your OpenAI API key in the AI Analysis Settings above."
+            elif st.session_state.ai_analysis_mode == "Google Gemini Pro Vision" and not st.session_state.gemini_api_key:
+                can_analyze = False
+                error_message = "Please configure your Gemini API key in the AI Analysis Settings above."
+            
+            if not can_analyze:
+                st.error(f"❌ {error_message}")
+            else:
+                with st.spinner(f"Analyzing image with {st.session_state.ai_analysis_mode}..."):
+                    # Perform basic computer vision analysis first
+                    crack_results, nail_pop_results, color_results = analyze_wall_image(image)
+                    
+                    # Create basic analysis summary
+                    basic_analysis = {
+                        'cracks': crack_results['count'],
+                        'crack_severity': crack_results['severity'],
+                        'crack_length': crack_results['total_length'],
+                        'nail_pops': nail_pop_results['count'],
+                        'nail_pop_severity': nail_pop_results['severity'],
+                        'water_damage_pixels': color_results['water_damage_pixels'],
+                        'color_inconsistency_pixels': color_results['color_inconsistency_pixels'],
+                        'color_severity': color_results['severity']
+                    }
+                    
+                    # Enhanced AI analysis if selected
+                    ai_analysis = None
+                    if st.session_state.ai_analysis_mode != "Basic Computer Vision":
+                        try:
+                            # Get available AI providers
+                            providers = get_available_providers(
+                                openai_key=st.session_state.openai_api_key,
+                                gemini_key=st.session_state.gemini_api_key
+                            )
+                            
+                            # Select the appropriate provider
+                            if st.session_state.ai_analysis_mode == "OpenAI GPT-4V" and "OpenAI GPT-4V" in providers:
+                                ai_analysis = analyze_with_ai(providers["OpenAI GPT-4V"], image, basic_analysis)
+                            elif st.session_state.ai_analysis_mode == "Google Gemini Pro Vision" and "Google Gemini Pro Vision" in providers:
+                                ai_analysis = analyze_with_ai(providers["Google Gemini Pro Vision"], image, basic_analysis)
+                                
+                        except Exception as e:
+                            st.error(f"AI analysis failed: {str(e)}")
+                            ai_analysis = None
+                    
+                    # Create annotated image
+                    annotated_image = create_comprehensive_annotation(
+                        image, crack_results, nail_pop_results, color_results
+                    )
+                    
+                    # Store results in session state
+                    st.session_state.analysis_complete = True
+                    st.session_state.detected_issues = basic_analysis
+                    st.session_state.ai_analysis = ai_analysis
+                    st.session_state.annotated_image = annotated_image
+                    st.session_state.crack_results = crack_results
+                    st.session_state.nail_pop_results = nail_pop_results
+                    st.session_state.color_results = color_results
         
         # Display results if analysis is complete
         if st.session_state.analysis_complete:
@@ -460,6 +574,64 @@ def main():
             if issues['color_inconsistency_pixels'] > 2000:
                 st.warning(f"🎨 **Color Inconsistency Alert**: {issues['color_inconsistency_pixels']:,} pixels show color variations")
             
+            # AI Analysis Results (if available)
+            if hasattr(st.session_state, 'ai_analysis') and st.session_state.ai_analysis:
+                ai_result = st.session_state.ai_analysis
+                
+                if ai_result.get('success', False):
+                    st.markdown("### 🤖 Professional AI Analysis")
+                    st.success(f"✅ Analysis completed by {ai_result.get('provider', 'AI Model')}")
+                    
+                    # Overall condition
+                    if 'overall_condition' in ai_result:
+                        condition = ai_result['overall_condition']
+                        condition_colors = {
+                            'Good': '🟢',
+                            'Fair': '🟡', 
+                            'Poor': '🔴',
+                            'Analyzed': '🔵'
+                        }
+                        color_icon = condition_colors.get(condition, '🔵')
+                        st.markdown(f"**Overall Wall Condition**: {color_icon} {condition}")
+                    
+                    # Professional notes
+                    if 'professional_notes' in ai_result:
+                        with st.expander("📋 Professional Assessment", expanded=True):
+                            st.markdown(ai_result['professional_notes'])
+                    
+                    # Detailed issues (if structured)
+                    if 'detected_issues' in ai_result and ai_result['detected_issues']:
+                        st.markdown("#### 🔍 Detailed Issue Analysis")
+                        for i, issue in enumerate(ai_result['detected_issues']):
+                            with st.expander(f"Issue {i+1}: {issue.get('type', 'Unknown').title()}", expanded=False):
+                                col1, col2 = st.columns(2)
+                                
+                                with col1:
+                                    st.markdown(f"**Severity**: {issue.get('severity', 'Unknown')}")
+                                    st.markdown(f"**Location**: {issue.get('location', 'Not specified')}")
+                                    st.markdown(f"**Priority**: {issue.get('priority', 'Medium')}")
+                                
+                                with col2:
+                                    if 'estimated_cost' in issue:
+                                        st.markdown(f"**Estimated Cost**: {issue['estimated_cost']}")
+                                
+                                if 'likely_cause' in issue:
+                                    st.markdown(f"**Likely Cause**: {issue['likely_cause']}")
+                                
+                                if 'repair_method' in issue:
+                                    st.markdown(f"**Repair Method**: {issue['repair_method']}")
+                    
+                    # Immediate actions
+                    if 'immediate_actions' in ai_result and ai_result['immediate_actions']:
+                        st.markdown("#### ⚡ Immediate Actions Required")
+                        for action in ai_result['immediate_actions']:
+                            st.warning(f"🚨 {action}")
+                
+                else:
+                    # AI analysis failed
+                    st.error(f"❌ AI Analysis Failed: {ai_result.get('error', 'Unknown error')}")
+                    st.info("💡 Falling back to basic computer vision analysis results above.")
+            
             # Legend
             st.markdown("### 🎨 Detection Legend")
             legend_col1, legend_col2 = st.columns(2)
@@ -511,13 +683,18 @@ def main():
                                 annotated_pil.save(annotated_img_buffer, format='PNG')
                                 annotated_img_bytes = annotated_img_buffer.getvalue()
                                 
-                                # Generate report
+                                # Generate comprehensive report
                                 report = {
                                     "wall_name": wall_name,
                                     "analysis_date": datetime.now().isoformat(),
+                                    "analysis_method": st.session_state.ai_analysis_mode,
                                     "detected_issues": issues,
                                     "recommendations": generate_recommendations(issues)
                                 }
+                                
+                                # Add AI analysis if available
+                                if hasattr(st.session_state, 'ai_analysis') and st.session_state.ai_analysis:
+                                    report["ai_analysis"] = st.session_state.ai_analysis
                                 
                                 # Upload to Google Drive
                                 folder_link = drive_service.upload_inspection_results(
@@ -553,13 +730,18 @@ def main():
                             mime="image/png"
                         )
                         
-                        # Generate report
+                        # Generate comprehensive report
                         report = {
                             "wall_name": wall_name,
                             "analysis_date": datetime.now().isoformat(),
+                            "analysis_method": st.session_state.ai_analysis_mode,
                             "detected_issues": issues,
                             "recommendations": generate_recommendations(issues)
                         }
+                        
+                        # Add AI analysis if available
+                        if hasattr(st.session_state, 'ai_analysis') and st.session_state.ai_analysis:
+                            report["ai_analysis"] = st.session_state.ai_analysis
                         
                         report_json = json.dumps(report, indent=2)
                         
