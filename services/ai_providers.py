@@ -204,7 +204,7 @@ class GeminiProvider(AIProvider):
     
     def __init__(self, api_key: str):
         super().__init__(api_key)
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
     
     def encode_image(self, image: Image.Image) -> str:
         """Encode PIL image to base64"""
@@ -291,7 +291,7 @@ Provide practical, actionable advice for homeowners."""
             content = result['candidates'][0]['content']['parts'][0]['text']
             
             return {
-                'provider': 'Google Gemini 1.5 Flash',
+                'provider': 'Google Gemini 1.5 Pro',
                 'success': True,
                 'professional_notes': content,
                 'overall_condition': 'Analyzed',
@@ -301,13 +301,13 @@ Provide practical, actionable advice for homeowners."""
                 
         except requests.exceptions.RequestException as e:
             return {
-                'provider': 'Google Gemini 1.5 Flash',
+                'provider': 'Google Gemini 1.5 Pro',
                 'success': False,
                 'error': f"API request failed: {str(e)}"
             }
         except Exception as e:
             return {
-                'provider': 'Google Gemini 1.5 Flash',
+                'provider': 'Google Gemini 1.5 Pro',
                 'success': False,
                 'error': f"Analysis failed: {str(e)}"
             }
@@ -358,7 +358,7 @@ def get_available_providers(openai_key: str = None, gemini_key: str = None) -> D
         providers['OpenAI GPT-4V'] = OpenAIProvider(openai_key)
     
     if gemini_key:
-        providers['Google Gemini 1.5 Flash'] = GeminiProvider(gemini_key)
+        providers['Google Gemini 1.5 Pro'] = GeminiProvider(gemini_key)
     
     return providers
 
