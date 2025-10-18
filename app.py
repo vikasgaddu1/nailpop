@@ -336,7 +336,7 @@ def main():
             
             if openai_key:
                 st.success("✅ OpenAI API key configured")
-                st.info("💡 **GPT-4V Benefits**: Professional building inspection analysis, detailed repair recommendations, cost estimates")
+                st.info("💡 **GPT-4o Vision Benefits**: Professional building inspection analysis, detailed repair recommendations, cost estimates")
             else:
                 st.warning("⚠️ Please enter your OpenAI API key to use GPT-4V analysis")
         

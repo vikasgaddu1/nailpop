@@ -33,7 +33,7 @@ class OpenAIProvider(AIProvider):
         clean_key = api_key.strip()
         super().__init__(clean_key)
         self.base_url = "https://api.openai.com/v1/chat/completions"
-        self.model = "gpt-4-vision-preview"
+        self.model = "gpt-4o"  # Updated to current vision model (was gpt-4-vision-preview)
     
     def encode_image(self, image: Image.Image) -> str:
         """Encode PIL image to base64"""
