@@ -305,7 +305,7 @@ def main():
             [
                 "🔧 Basic Computer Vision (Free)",
                 "🤖 OpenAI GPT-4V (Requires API Key)",
-                "🔮 Google Gemini 1.5 Pro (Requires API Key)"
+                "🔮 Google Gemini (Requires API Key)"
             ],
             key="analysis_mode_radio",
             help="Basic analysis is free but limited. AI models provide professional-grade analysis."
@@ -315,7 +315,7 @@ def main():
         if analysis_mode.startswith("🤖"):
             st.session_state.ai_analysis_mode = "OpenAI GPT-4V"
         elif analysis_mode.startswith("🔮"):
-            st.session_state.ai_analysis_mode = "Google Gemini 1.5 Pro"
+            st.session_state.ai_analysis_mode = "Google Gemini"
         else:
             st.session_state.ai_analysis_mode = "Basic Computer Vision"
         
@@ -337,7 +337,7 @@ def main():
             else:
                 st.warning("⚠️ Please enter your OpenAI API key to use GPT-4V analysis")
         
-        elif st.session_state.ai_analysis_mode == "Google Gemini 1.5 Pro":
+        elif st.session_state.ai_analysis_mode == "Google Gemini":
             st.markdown("#### 🔑 Google Gemini Configuration")
             gemini_key = st.text_input(
                 "Gemini API Key:",
@@ -350,9 +350,9 @@ def main():
             
             if gemini_key:
                 st.success("✅ Gemini API key configured")
-                st.info("💡 **Gemini 1.5 Pro Benefits**: Advanced visual analysis with detailed damage assessment and professional repair advice")
+                st.info("💡 **Gemini Benefits**: Advanced visual analysis with detailed damage assessment and professional repair advice")
             else:
-                st.warning("⚠️ Please enter your Gemini API key to use Gemini 1.5 Pro analysis")
+                st.warning("⚠️ Please enter your Gemini API key to use Gemini analysis")
         
         else:
             st.info("🔧 **Basic Analysis**: Uses computer vision algorithms for crack, nail pop, and color analysis. Free but limited compared to AI models.")
@@ -464,7 +464,7 @@ def main():
         analysis_button_text = {
             'Basic Computer Vision': '🔍 Analyze Wall Defects (Basic)',
             'OpenAI GPT-4V': '🤖 Analyze with GPT-4V (Professional)',
-            'Google Gemini 1.5 Pro': '🔮 Analyze with Gemini 1.5 Pro'
+            'Google Gemini': '🔮 Analyze with Gemini'
         }
         
         button_text = analysis_button_text.get(st.session_state.ai_analysis_mode, '🔍 Analyze Wall Defects')
@@ -477,7 +477,7 @@ def main():
             if st.session_state.ai_analysis_mode == "OpenAI GPT-4V" and not st.session_state.openai_api_key:
                 can_analyze = False
                 error_message = "Please configure your OpenAI API key in the AI Analysis Settings above."
-            elif st.session_state.ai_analysis_mode == "Google Gemini 1.5 Pro" and not st.session_state.gemini_api_key:
+            elif st.session_state.ai_analysis_mode == "Google Gemini" and not st.session_state.gemini_api_key:
                 can_analyze = False
                 error_message = "Please configure your Gemini API key in the AI Analysis Settings above."
             
@@ -532,8 +532,8 @@ def main():
                             # Select the appropriate provider
                             if st.session_state.ai_analysis_mode == "OpenAI GPT-4V" and "OpenAI GPT-4V" in providers:
                                 ai_analysis = analyze_with_ai(providers["OpenAI GPT-4V"], image, basic_analysis)
-                            elif st.session_state.ai_analysis_mode == "Google Gemini 1.5 Pro" and "Google Gemini 1.5 Pro" in providers:
-                                ai_analysis = analyze_with_ai(providers["Google Gemini 1.5 Pro"], image, basic_analysis)
+                            elif st.session_state.ai_analysis_mode == "Google Gemini" and "Google Gemini" in providers:
+                                ai_analysis = analyze_with_ai(providers["Google Gemini"], image, basic_analysis)
                                 
                         except Exception as e:
                             st.error(f"AI analysis failed: {str(e)}")
