@@ -111,8 +111,24 @@ GEMINI_API_KEY = "your-gemini-api-key-here"
 
 **Solution:**
 - Check that all files are committed and pushed to GitHub
-- Ensure `requirements.txt` is in the root directory
+- Ensure `requirements.txt` and `packages.txt` are in the root directory
 - Look at deployment logs for specific errors
+
+### Issue: OpenCV/cv2 import error
+
+**Solution:**
+- The `packages.txt` file is required for OpenCV system dependencies
+- This file should already be in your repository
+- If missing, create `packages.txt` with these libraries:
+  ```
+  libgl1-mesa-glx
+  libglib2.0-0
+  libsm6
+  libxext6
+  libxrender-dev
+  libgomp1
+  ```
+- Commit and push, then reboot your app
 
 ### Issue: Camera doesn't work
 
