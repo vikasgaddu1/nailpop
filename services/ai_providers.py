@@ -29,7 +29,9 @@ class OpenAIProvider(AIProvider):
     """OpenAI GPT-4V provider for wall damage analysis"""
     
     def __init__(self, api_key: str):
-        super().__init__(api_key)
+        # Clean the API key to remove any trailing whitespace
+        clean_key = api_key.strip()
+        super().__init__(clean_key)
         self.base_url = "https://api.openai.com/v1/chat/completions"
         self.model = "gpt-4-vision-preview"
     
@@ -203,7 +205,9 @@ class GeminiProvider(AIProvider):
     """Google Gemini provider for wall damage analysis"""
     
     def __init__(self, api_key: str):
-        super().__init__(api_key)
+        # Clean the API key to remove any trailing whitespace or backslashes
+        clean_key = api_key.strip().rstrip('\\')
+        super().__init__(clean_key)
         self.base_url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent"
     
     def encode_image(self, image: Image.Image) -> str:
@@ -279,12 +283,23 @@ Provide practical, actionable advice for homeowners."""
                 }
             }
             
+            # Construct URL with cleaned API key
+            url = f"{self.base_url}?key={self.api_key}"
+            
             response = requests.post(
-                f"{self.base_url}?key={self.api_key}", 
+                url, 
                 headers=headers, 
                 json=payload, 
                 timeout=30
             )
+            
+            # Check for errors
+            if response.status_code != 200:
+                error_detail = response.text[:500] if response.text else "No error details"
+                raise requests.exceptions.RequestException(
+                    f"Status {response.status_code}: {error_detail}"
+                )
+            
             response.raise_for_status()
             
             result = response.json()

@@ -329,7 +329,8 @@ def main():
                 help="Get your API key from https://platform.openai.com/api-keys",
                 placeholder="sk-..."
             )
-            st.session_state.openai_api_key = openai_key
+            # Clean the API key before storing
+            st.session_state.openai_api_key = openai_key.strip() if openai_key else ""
             
             if openai_key:
                 st.success("✅ OpenAI API key configured")
@@ -346,7 +347,9 @@ def main():
                 help="Get your API key from https://aistudio.google.com/app/apikey",
                 placeholder="AIza..."
             )
-            st.session_state.gemini_api_key = gemini_key
+            # Clean the API key before storing (remove whitespace and trailing backslashes)
+            cleaned_key = gemini_key.strip().rstrip('\\') if gemini_key else ""
+            st.session_state.gemini_api_key = cleaned_key
             
             if gemini_key:
                 st.success("✅ Gemini API key configured")
