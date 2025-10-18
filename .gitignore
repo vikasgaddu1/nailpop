@@ -40,6 +40,7 @@ venv.bak/
 .idea/
 *.swp
 *.swo
+.claude/
 
 # OS
 .DS_Store
@@ -48,16 +49,78 @@ Thumbs.db
 # Google credentials
 credentials.json
 service-account-key.json
-*.json
+*-service-account*.json
+google-credentials*.json
+
+# Streamlit cache
+.streamlit/cache/
 
 # Logs
 *.log
+logs/
 
 # Temporary files
 *.tmp
 *.temp
 temp/
+tmp/
 
 # Test files
 test_images/
 uploads/
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# UV package manager
+.uv/
+uv
+
+# Batch file logs (if any)
+*.bat.log
+
+# Analysis results (local storage)
+inspections/
+results/
+reports/
+
+# API keys and secrets (if stored locally)
+.env.local
+.env.production
+api_keys.txt
+secrets.txt
+
+# Jupyter notebooks (if created)
+.ipynb_checkpoints/
+*.ipynb
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Backup files
+*.bak
+*.backup
+*~

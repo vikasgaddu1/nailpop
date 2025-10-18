@@ -725,13 +725,13 @@ def main():
                                     "wall_name": wall_name,
                                     "analysis_date": datetime.now().isoformat(),
                                     "analysis_method": st.session_state.ai_analysis_mode,
-                                    "detected_issues": issues,
+                                    "detected_issues": convert_to_serializable(issues),
                                     "recommendations": generate_recommendations(issues)
                                 }
-                                
+
                                 # Add AI analysis if available
                                 if hasattr(st.session_state, 'ai_analysis') and st.session_state.ai_analysis:
-                                    report["ai_analysis"] = st.session_state.ai_analysis
+                                    report["ai_analysis"] = convert_to_serializable(st.session_state.ai_analysis)
                                 
                                 # Upload to Google Drive
                                 folder_link = drive_service.upload_inspection_results(
@@ -772,14 +772,14 @@ def main():
                             "wall_name": wall_name,
                             "analysis_date": datetime.now().isoformat(),
                             "analysis_method": st.session_state.ai_analysis_mode,
-                            "detected_issues": issues,
+                            "detected_issues": convert_to_serializable(issues),
                             "recommendations": generate_recommendations(issues)
                         }
-                        
+
                         # Add AI analysis if available
                         if hasattr(st.session_state, 'ai_analysis') and st.session_state.ai_analysis:
-                            report["ai_analysis"] = st.session_state.ai_analysis
-                        
+                            report["ai_analysis"] = convert_to_serializable(st.session_state.ai_analysis)
+
                         report_json = json.dumps(report, indent=2)
                         
                         st.download_button(
@@ -819,10 +819,25 @@ def main():
                 
                 st.success("✅ Analysis complete! Files ready for sharing with contractors.")
 
+def convert_to_serializable(obj):
+    """Convert numpy types to native Python types for JSON serialization"""
+    if isinstance(obj, dict):
+        return {key: convert_to_serializable(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_serializable(item) for item in obj]
+    elif isinstance(obj, (np.integer, np.int64, np.int32)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64, np.float32)):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    else:
+        return obj
+
 def generate_recommendations(issues):
     """Generate recommendations based on detected issues"""
     recommendations = []
-    
+
     # Crack recommendations
     if issues['cracks'] > 0:
         if issues['crack_severity'] == 'Severe':

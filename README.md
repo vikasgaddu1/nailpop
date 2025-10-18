@@ -32,16 +32,32 @@ AI-powered wall damage detection web application built with Streamlit for mobile
    ```
 
 2. **Run the application**:
+
+   **For Mobile/Tablet** (Recommended for phone users):
+   ```bash
+   uv run streamlit run app_mobile_optimized.py
+   ```
+
+   **For Desktop** (Full-featured version):
    ```bash
    uv run streamlit run app.py
    ```
 
 3. **Open in browser**: Navigate to `http://localhost:8501`
 
+> **💡 New**: We now offer a mobile-optimized version with step-by-step wizard interface! See [MOBILE_UX_GUIDE.md](MOBILE_UX_GUIDE.md) for details.
+
 ## Usage
 
+### Mobile-Optimized Version (Recommended for phones/tablets)
+1. **Step 1 - Capture**: Take a photo or upload from gallery
+2. **Step 2 - Settings**: Choose analysis mode (Basic free or AI professional)
+3. **Step 3 - Analyze**: Run the analysis with one tap
+4. **Step 4 - Results**: View results in organized tabs (Images, Metrics, Save)
+
+### Desktop Version (Full-featured)
 1. **Select Camera**: Choose between enhanced camera (multi-camera support), simple camera, or file upload
-2. **Camera Setup**: 
+2. **Camera Setup**:
    - **Mobile**: App automatically detects and recommends back camera for better quality
    - **Desktop**: Choose between integrated webcam or external 4K camera
    - **Quality Check**: App shows resolution and provides quality recommendations
@@ -49,6 +65,8 @@ AI-powered wall damage detection web application built with Streamlit for mobile
 4. **Analyze**: Click "Analyze Wall Defects" to detect issues using AI
 5. **Review Results**: View detected problems with visual annotations and severity ratings
 6. **Save & Share**: Name your inspection and share via Google Drive or download locally
+
+> **Choose Your Version**: Mobile version = less scrolling (60% reduction), step-by-step guidance, tabbed results. Desktop version = all features visible, side-by-side comparison, advanced camera options.
 
 ## Detection Capabilities
 
