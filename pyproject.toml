@@ -6,15 +6,13 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "streamlit>=1.28.0",
-    "opencv-python>=4.8.0",
+    "opencv-python-headless>=4.8.0",  # Use headless for cloud deployment
     "pillow>=10.0.0",
     "numpy>=1.24.0",
-    "pandas>=2.0.0",
-    "streamlit-drawable-canvas>=0.9.0",
+    "requests>=2.32.0",
     "google-api-python-client>=2.100.0",
     "google-auth-httplib2>=0.1.1",
     "google-auth-oauthlib>=1.1.0",
-    "requests>=2.32.5",
 ]
 
 [tool.hatch.build.targets.wheel]

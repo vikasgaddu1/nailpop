@@ -267,9 +267,11 @@ def main():
     if 'ai_analysis_mode' not in st.session_state:
         st.session_state.ai_analysis_mode = 'Basic Computer Vision'
     if 'openai_api_key' not in st.session_state:
-        st.session_state.openai_api_key = ''
+        # Try to load from Streamlit secrets first (for cloud deployment)
+        st.session_state.openai_api_key = st.secrets.get('OPENAI_API_KEY', '')
     if 'gemini_api_key' not in st.session_state:
-        st.session_state.gemini_api_key = ''
+        # Try to load from Streamlit secrets first (for cloud deployment)
+        st.session_state.gemini_api_key = st.secrets.get('GEMINI_API_KEY', '')
     
     # Image capture section
     st.markdown("### 📸 Capture or Upload Wall Image")

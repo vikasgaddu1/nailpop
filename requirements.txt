@@ -1,0 +1,22 @@
+# Wall Inspector - Streamlit Cloud Requirements
+# AI-powered wall damage detection
+
+# Core dependencies
+streamlit>=1.28.0
+opencv-python-headless>=4.8.0  # Headless version for cloud deployment
+pillow>=10.0.0
+numpy>=1.24.0
+
+# API and HTTP
+requests>=2.32.0
+
+# Google Drive integration (optional)
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.1.1
+google-auth-oauthlib>=1.1.0
+
+# Note: pandas and streamlit-drawable-canvas are optional
+# Uncomment if needed for future features:
+# pandas>=2.0.0
+# streamlit-drawable-canvas>=0.9.0
+
