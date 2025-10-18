@@ -31,6 +31,18 @@ def camera_selector():
                 background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
                 border-radius: 15px;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                min-height: 600px;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .button-section {
+                margin-top: auto;
+                padding: 20px;
+                border-top: 2px solid #e0e0e0;
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 0 0 15px 15px;
+                margin: 20px -20px -20px -20px;
             }
             
             .camera-controls {
@@ -60,10 +72,11 @@ def camera_selector():
             
             video {
                 max-width: 100%;
-                max-height: 400px;
+                max-height: 300px;
                 border-radius: 12px;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.2);
                 background: #000;
+                margin-bottom: 15px;
             }
             
             .capture-btn {
@@ -77,7 +90,9 @@ def camera_selector():
                 cursor: pointer;
                 box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
                 transition: all 0.3s ease;
-                margin: 20px 10px;
+                margin: 10px 5px;
+                min-width: 180px;
+                display: inline-block;
             }
             
             .capture-btn:hover {
@@ -178,7 +193,13 @@ def camera_selector():
                 }
                 
                 video {
-                    max-height: 300px;
+                    max-height: 250px;
+                }
+                
+                .button-section {
+                    position: sticky;
+                    bottom: 0;
+                    z-index: 100;
                 }
             }
         </style>
@@ -209,7 +230,7 @@ def camera_selector():
             <video id="video" autoplay playsinline muted style="display: none;"></video>
             <canvas id="canvas" style="display: none;"></canvas>
             
-            <div>
+            <div class="button-section">
                 <button id="startCamera" class="capture-btn">📷 Start Camera</button>
                 <button id="captureBtn" class="capture-btn" disabled style="opacity: 0.5;">📸 Capture Photo</button>
                 <button id="retakeBtn" class="capture-btn" style="display: none;">🔄 Retake</button>
@@ -471,8 +492,8 @@ def camera_selector():
     </html>
     """
     
-    # Render the component
-    result = components.html(camera_html, height=600, scrolling=False)
+    # Render the component with increased height to ensure buttons are visible
+    result = components.html(camera_html, height=700, scrolling=True)
     
     return result
 
