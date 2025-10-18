@@ -17,6 +17,7 @@ import json
 # Import our enhanced detection models
 from models import CrackDetector, NailPopDetector, ColorAnalyzer
 from services import get_drive_service, is_drive_available
+from components import camera_selector, process_camera_result
 
 # Configure page for mobile optimization
 st.set_page_config(
@@ -242,30 +243,119 @@ def main():
         st.session_state.analysis_complete = False
     if 'detected_issues' not in st.session_state:
         st.session_state.detected_issues = []
+    if 'camera_mode' not in st.session_state:
+        st.session_state.camera_mode = 'enhanced'
+    if 'captured_image' not in st.session_state:
+        st.session_state.captured_image = None
+    if 'camera_info' not in st.session_state:
+        st.session_state.camera_info = {}
     
-    # Image upload section
+    # Image capture section
     st.markdown("### 📸 Capture or Upload Wall Image")
     
-    # Camera input (works on mobile)
-    uploaded_file = st.camera_input("Take a picture of the wall", key="camera")
+    # Camera selection guide
+    with st.expander("📖 Camera Selection Guide", expanded=False):
+        st.markdown("""
+        **For Best Results:**
+        
+        🏠 **Desktop/Laptop Users:**
+        - 📹 **External 4K Webcam**: Highest quality, best for detailed damage detection
+        - 💻 **Built-in Camera**: Good for basic inspection, may have lower resolution
+        
+        📱 **Mobile Users:**
+        - 📱 **Back Camera**: Higher resolution, better sensors, recommended for wall inspection
+        - 🤳 **Front Camera**: Lower resolution, suitable for quick checks only
+        
+        **💡 Tips:**
+        - Ensure good lighting (natural light preferred)
+        - Hold device steady or use a tripod
+        - Get close enough to see wall texture clearly
+        - Avoid shadows and reflections
+        - Higher megapixel count = better defect detection
+        """)
     
-    # Alternative file upload
-    if uploaded_file is None:
+    # Camera mode selection
+    camera_mode = st.radio(
+        "Choose capture method:",
+        ["📷 Enhanced Camera (Multi-camera support)", "📱 Simple Camera", "📁 Upload from Gallery"],
+        key="camera_mode_radio",
+        horizontal=True
+    )
+    
+    uploaded_file = None
+    
+    if camera_mode == "📷 Enhanced Camera (Multi-camera support)":
+        st.markdown("#### 🎥 Advanced Camera Selection")
+        st.info("💡 **Tip**: Use back camera on mobile or external 4K camera on desktop for best quality")
+        
+        # Enhanced camera selector
+        camera_result = camera_selector()
+        
+        if camera_result:
+            image, camera_info = process_camera_result(camera_result)
+            if image:
+                st.session_state.captured_image = image
+                st.session_state.camera_info = camera_info
+                uploaded_file = "camera_capture"  # Flag to indicate camera capture
+                
+                # Show camera info
+                if camera_info:
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("📷 Camera", camera_info.get('name', 'Unknown'))
+                    with col2:
+                        st.metric("📐 Resolution", camera_info.get('resolution', 'Unknown'))
+                    with col3:
+                        st.metric("📱 Facing", camera_info.get('facing', 'Unknown'))
+    
+    elif camera_mode == "📱 Simple Camera":
+        st.markdown("#### 📱 Simple Camera Capture")
+        # Standard Streamlit camera input
+        uploaded_file = st.camera_input("Take a picture of the wall", key="simple_camera")
+    
+    else:  # Upload from Gallery
+        st.markdown("#### 📁 File Upload")
         uploaded_file = st.file_uploader(
-            "Or upload an image from gallery",
-            type=['png', 'jpg', 'jpeg'],
-            key="file_upload"
+            "Choose an image from your device",
+            type=['png', 'jpg', 'jpeg', 'webp'],
+            key="file_upload",
+            help="Supported formats: PNG, JPG, JPEG, WebP. Max size: 200MB"
         )
     
     if uploaded_file is not None:
-        # Display original image
-        image = Image.open(uploaded_file)
+        # Handle different image sources
+        if uploaded_file == "camera_capture":
+            # Use captured image from enhanced camera
+            image = st.session_state.captured_image
+        else:
+            # Use uploaded file or simple camera
+            image = Image.open(uploaded_file)
         
         col1, col2 = st.columns([1, 1])
         
         with col1:
             st.markdown("#### Original Image")
-            st.image(image, use_column_width=True)
+            st.image(image, use_container_width=True)
+            
+            # Show image quality info
+            img_width, img_height = image.size
+            megapixels = (img_width * img_height) / 1_000_000
+            
+            quality_info = f"📐 **Resolution**: {img_width}x{img_height} ({megapixels:.1f}MP)"
+            
+            if uploaded_file == "camera_capture" and st.session_state.camera_info:
+                camera_info = st.session_state.camera_info
+                quality_info += f"\n📷 **Camera**: {camera_info.get('name', 'Unknown')}"
+                
+                # Quality recommendations
+                if megapixels >= 8:
+                    st.success(f"✅ Excellent quality! {quality_info}")
+                elif megapixels >= 4:
+                    st.info(f"👍 Good quality. {quality_info}")
+                else:
+                    st.warning(f"⚠️ Lower quality detected. Consider using a higher resolution camera. {quality_info}")
+            else:
+                st.info(quality_info)
         
         # Analysis button
         if st.button("🔍 Analyze Wall Defects", key="analyze_btn"):

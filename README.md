@@ -4,15 +4,25 @@ AI-powered wall damage detection web application built with Streamlit for mobile
 
 ## Features
 
-- **Mobile Camera Integration**: Take photos directly from your mobile device
+- **Advanced Camera Selection**: 
+  - Choose between multiple cameras (front/back on mobile, integrated/external on desktop)
+  - Automatic detection of camera capabilities and resolution
+  - Optimized for 4K webcams and high-resolution mobile cameras
+  - Real-time camera switching and quality assessment
 - **AI-Powered Detection**: Automatically detect:
-  - Cracks in walls
-  - Water damage and discoloration
-  - Color inconsistencies
-  - Potential nail pops
-- **Visual Annotations**: See detected issues highlighted on your images
-- **Easy Sharing**: Download annotated images and analysis reports
-- **Mobile Optimized**: Responsive design for smartphones and tablets
+  - Cracks in walls using advanced edge detection
+  - Water damage and discoloration analysis
+  - Color inconsistencies across wall surfaces
+  - Potential nail pops using circular detection
+- **Visual Annotations**: See detected issues highlighted on your images with severity indicators
+- **Easy Sharing**: 
+  - Google Drive integration for cloud sharing
+  - Download annotated images and detailed JSON reports
+  - Generate shareable links for contractors
+- **Mobile Optimized**: 
+  - PWA-style responsive design for smartphones and tablets
+  - Touch-optimized controls and gestures
+  - Optimized for both portrait and landscape orientations
 
 ## Quick Start
 
@@ -30,10 +40,15 @@ AI-powered wall damage detection web application built with Streamlit for mobile
 
 ## Usage
 
-1. **Capture Image**: Use your mobile camera or upload from gallery
-2. **Analyze**: Click "Analyze Wall Defects" to detect issues
-3. **Review Results**: View detected problems with visual annotations
-4. **Save & Share**: Name your inspection and download results
+1. **Select Camera**: Choose between enhanced camera (multi-camera support), simple camera, or file upload
+2. **Camera Setup**: 
+   - **Mobile**: App automatically detects and recommends back camera for better quality
+   - **Desktop**: Choose between integrated webcam or external 4K camera
+   - **Quality Check**: App shows resolution and provides quality recommendations
+3. **Capture Image**: Take photo with selected camera or upload from gallery
+4. **Analyze**: Click "Analyze Wall Defects" to detect issues using AI
+5. **Review Results**: View detected problems with visual annotations and severity ratings
+6. **Save & Share**: Name your inspection and share via Google Drive or download locally
 
 ## Detection Capabilities
 
