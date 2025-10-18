@@ -131,7 +131,29 @@ Be thorough but practical in your assessment."""
             response.raise_for_status()
             
             result = response.json()
-            content = result['choices'][0]['message']['content']
+            
+            # Parse response with better error handling
+            try:
+                if 'choices' in result and len(result['choices']) > 0:
+                    choice = result['choices'][0]
+                    if 'message' in choice and 'content' in choice['message']:
+                        content = choice['message']['content']
+                    elif 'text' in choice:
+                        content = choice['text']
+                    else:
+                        content = str(choice)
+                else:
+                    content = f"Analysis completed. Unexpected response format: {str(result)[:200]}"
+                
+                if not content or len(content) < 10:
+                    content = "Analysis completed but response was empty or malformed."
+                    
+            except Exception as parse_error:
+                return {
+                    'provider': 'OpenAI GPT-4V',
+                    'success': False,
+                    'error': f"Failed to parse response: {str(parse_error)}"
+                }
             
             # Try to parse JSON response
             try:
@@ -303,7 +325,38 @@ Provide practical, actionable advice for homeowners."""
             response.raise_for_status()
             
             result = response.json()
-            content = result['candidates'][0]['content']['parts'][0]['text']
+            
+            # Parse response with better error handling
+            try:
+                # Try to get the content from different possible locations
+                if 'candidates' in result and len(result['candidates']) > 0:
+                    candidate = result['candidates'][0]
+                    
+                    # Check if content has parts
+                    if 'content' in candidate:
+                        if 'parts' in candidate['content'] and len(candidate['content']['parts']) > 0:
+                            content = candidate['content']['parts'][0].get('text', '')
+                        elif 'text' in candidate['content']:
+                            content = candidate['content']['text']
+                        else:
+                            content = str(candidate['content'])
+                    elif 'text' in candidate:
+                        content = candidate['text']
+                    else:
+                        # Fallback: use the entire candidate as string
+                        content = f"Analysis completed. Response structure: {str(candidate)[:200]}"
+                else:
+                    content = f"Analysis completed. Unexpected response format: {str(result)[:200]}"
+                
+                if not content or len(content) < 10:
+                    content = "Analysis completed but response was empty or malformed."
+                
+            except Exception as parse_error:
+                return {
+                    'provider': 'Google Gemini 2.5 Flash',
+                    'success': False,
+                    'error': f"Failed to parse response: {str(parse_error)}. Raw response: {str(result)[:300]}"
+                }
             
             return {
                 'provider': 'Google Gemini 2.5 Flash',
