@@ -409,7 +409,7 @@ def main():
         if st.session_state.analysis_complete:
             with col2:
                 st.markdown("#### Detected Issues")
-                st.image(st.session_state.annotated_image, use_column_width=True)
+                st.image(st.session_state.annotated_image, use_container_width=True)
             
             # Results summary
             st.markdown("### 📊 Analysis Results")
