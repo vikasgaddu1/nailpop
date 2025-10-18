@@ -204,7 +204,7 @@ class GeminiProvider(AIProvider):
     
     def __init__(self, api_key: str):
         super().__init__(api_key)
-        self.base_url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent"
+        self.base_url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent"
     
     def encode_image(self, image: Image.Image) -> str:
         """Encode PIL image to base64"""
@@ -291,7 +291,7 @@ Provide practical, actionable advice for homeowners."""
             content = result['candidates'][0]['content']['parts'][0]['text']
             
             return {
-                'provider': 'Google Gemini',
+                'provider': 'Google Gemini 2.5 Flash',
                 'success': True,
                 'professional_notes': content,
                 'overall_condition': 'Analyzed',
@@ -301,13 +301,13 @@ Provide practical, actionable advice for homeowners."""
                 
         except requests.exceptions.RequestException as e:
             return {
-                'provider': 'Google Gemini',
+                'provider': 'Google Gemini 2.5 Flash',
                 'success': False,
                 'error': f"API request failed: {str(e)}"
             }
         except Exception as e:
             return {
-                'provider': 'Google Gemini',
+                'provider': 'Google Gemini 2.5 Flash',
                 'success': False,
                 'error': f"Analysis failed: {str(e)}"
             }

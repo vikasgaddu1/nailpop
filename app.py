@@ -305,7 +305,7 @@ def main():
             [
                 "🔧 Basic Computer Vision (Free)",
                 "🤖 OpenAI GPT-4V (Requires API Key)",
-                "🔮 Google Gemini (Requires API Key)"
+                "🔮 Google Gemini 2.5 Flash (Requires API Key)"
             ],
             key="analysis_mode_radio",
             help="Basic analysis is free but limited. AI models provide professional-grade analysis."
