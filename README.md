@@ -1,28 +1,24 @@
-# Wall Inspector 🏠
+# Wall Inspector
 
-AI-powered wall damage detection web application built with Streamlit for mobile-first experience.
+AI-powered wall damage detection web application built with Streamlit. Mobile-first design for easy on-site inspections.
 
 ## Features
 
-- **Advanced Camera Selection**: 
-  - Choose between multiple cameras (front/back on mobile, integrated/external on desktop)
-  - Automatic detection of camera capabilities and resolution
-  - Optimized for 4K webcams and high-resolution mobile cameras
-  - Real-time camera switching and quality assessment
+- **Mobile-First Design**: Simple 2-tap workflow from photo to results
 - **AI-Powered Detection**: Automatically detect:
-  - Cracks in walls using advanced edge detection
-  - Water damage and discoloration analysis
-  - Color inconsistencies across wall surfaces
-  - Potential nail pops using circular detection
-- **Visual Annotations**: See detected issues highlighted on your images with severity indicators
-- **Easy Sharing**: 
-  - Google Drive integration for cloud sharing
-  - Download annotated images and detailed JSON reports
-  - Generate shareable links for contractors
-- **Mobile Optimized**: 
-  - PWA-style responsive design for smartphones and tablets
-  - Touch-optimized controls and gestures
-  - Optimized for both portrait and landscape orientations
+  - Cracks in walls (Canny edge detection, CLAHE enhancement)
+  - Nail pops (HoughCircles algorithm)
+  - Water damage (HSV/LAB color analysis)
+  - Color inconsistencies
+- **Three Analysis Modes**:
+  - Basic Computer Vision (free, runs locally)
+  - OpenAI GPT-4o Vision (professional analysis)
+  - Google Gemini 2.5 Flash (fast AI analysis)
+- **Visual Annotations**: Color-coded overlays showing detected defects with severity ratings
+- **Easy Sharing**:
+  - Download annotated images and JSON reports
+  - Google Drive integration (optional)
+  - Shareable links for contractors
 
 ## Quick Start
 
@@ -32,88 +28,82 @@ AI-powered wall damage detection web application built with Streamlit for mobile
    ```
 
 2. **Run the application**:
-
-   **For Mobile/Tablet** (Recommended for phone users):
-   ```bash
-   uv run streamlit run app_mobile_optimized.py
-   ```
-
-   **For Desktop** (Full-featured version):
    ```bash
    uv run streamlit run app.py
    ```
 
-3. **Open in browser**: Navigate to `http://localhost:8501`
-
-> **💡 New**: We now offer a mobile-optimized version with step-by-step wizard interface! See [MOBILE_UX_GUIDE.md](MOBILE_UX_GUIDE.md) for details.
+3. **Open in browser**:
+   - **Local**: `http://localhost:8501`
+   - **Mobile** (same WiFi): `http://YOUR-LOCAL-IP:8501`
 
 ## Usage
 
-### Mobile-Optimized Version (Recommended for phones/tablets)
-1. **Step 1 - Capture**: Take a photo or upload from gallery
-2. **Step 2 - Settings**: Choose analysis mode (Basic free or AI professional)
-3. **Step 3 - Analyze**: Run the analysis with one tap
-4. **Step 4 - Results**: View results in organized tabs (Images, Metrics, Save)
+### Simple 2-Step Workflow
 
-### Desktop Version (Full-featured)
-1. **Select Camera**: Choose between enhanced camera (multi-camera support), simple camera, or file upload
-2. **Camera Setup**:
-   - **Mobile**: App automatically detects and recommends back camera for better quality
-   - **Desktop**: Choose between integrated webcam or external 4K camera
-   - **Quality Check**: App shows resolution and provides quality recommendations
-3. **Capture Image**: Take photo with selected camera or upload from gallery
-4. **Analyze**: Click "Analyze Wall Defects" to detect issues using AI
-5. **Review Results**: View detected problems with visual annotations and severity ratings
-6. **Save & Share**: Name your inspection and share via Google Drive or download locally
+1. **Choose AI Model**: Select Basic (free), OpenAI, or Gemini
+   - Enter API key if using AI analysis (optional)
 
-> **Choose Your Version**: Mobile version = less scrolling (60% reduction), step-by-step guidance, tabbed results. Desktop version = all features visible, side-by-side comparison, advanced camera options.
+2. **Take or Upload Photo**:
+   - Mobile: Camera or gallery (native controls)
+   - Desktop: File picker
+   - Analysis starts automatically
+   - View results with annotated image
 
-## Detection Capabilities
-
-### Current Features
-- **Crack Detection**: Uses edge detection to identify potential cracks
-- **Color Analysis**: Detects areas with unusual brightness or saturation
-- **Circular Detection**: Identifies potential nail pops using Hough circles
+3. **Take Another Photo** or download results
 
 ### Detection Legend
+
 - 🔴 **Red lines**: Detected cracks
-- 🔵 **Blue areas**: Potential water damage (dark areas)
-- 🟡 **Yellow areas**: Color inconsistencies
 - 🟢 **Green circles**: Potential nail pops
+- 🔵 **Blue overlay**: Water damage (dark areas)
+- 🟡 **Yellow overlay**: Color inconsistencies
+
+## Documentation
+
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Deploy to Streamlit Cloud, Render, or Google Cloud Run
+- **[Development Guide](docs/DEVELOPMENT.md)** - Local development, testing, and contributing
+- **[Changelog](docs/CHANGELOG.md)** - Version history and migration notes
 
 ## Technical Stack
 
-- **Framework**: Streamlit for rapid web app development
-- **Computer Vision**: OpenCV for image processing
-- **Image Processing**: PIL/Pillow for image handling
-- **Package Management**: UV for dependency management
-
-## Future Enhancements
-
-- [ ] Google Drive integration for cloud storage
-- [ ] Advanced ML models for better detection accuracy
-- [ ] Interactive annotation tools
-- [ ] Contractor sharing system
-- [ ] Historical inspection tracking
+- **Framework**: Streamlit
+- **Computer Vision**: OpenCV
+- **Image Processing**: PIL/Pillow
+- **Package Management**: UV
+- **AI Providers**: OpenAI GPT-4o, Google Gemini 2.5 Flash
 
 ## Deployment
 
-### Local Development
+Quick deploy to Streamlit Community Cloud (free):
+
+1. Push to GitHub
+2. Visit [share.streamlit.io](https://share.streamlit.io)
+3. Connect repository
+4. Deploy `app.py`
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions and other platforms.
+
+## Development
+
 ```bash
+# Install dependencies
+uv sync
+
+# Run locally
 uv run streamlit run app.py
+
+# Test on mobile (same WiFi)
+# Open http://YOUR-LOCAL-IP:8501
 ```
 
-### Production Deployment
-- **Streamlit Community Cloud**: Free hosting for public repos
-- **Render**: Free tier with automatic deployments
-- **Heroku**: Simple deployment with git integration
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full development guide.
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly on mobile devices
+4. Test on mobile devices
 5. Submit a pull request
 
 ## License
@@ -122,4 +112,4 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-For issues and questions, please open a GitHub issue or contact the development team.
+For issues and questions, please open a GitHub issue.

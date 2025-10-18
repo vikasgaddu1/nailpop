@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Wall Inspector is an AI-powered wall damage detection web application built with Streamlit. It analyzes images to detect cracks, nail pops, water damage, and color inconsistencies using computer vision and optional AI analysis (OpenAI GPT-4V or Google Gemini 2.5 Flash).
+Wall Inspector is an AI-powered wall damage detection web application built with Streamlit. It analyzes images to detect cracks, nail pops, water damage, and color inconsistencies using computer vision and optional AI analysis (OpenAI GPT-4o Vision or Google Gemini 2.5 Flash).
+
+**Current Version**: Mobile-first design with auto-analysis workflow (2-tap from photo to results).
 
 ## Development Commands
 
@@ -20,14 +22,16 @@ uv run streamlit run app.py
 ```
 
 ### Testing
-The project uses basic computer vision algorithms without a formal test suite. Manual testing workflow:
+Manual testing workflow:
 1. Run the app with `uv run streamlit run app.py`
-2. Test with different image types (mobile camera, file upload, enhanced camera)
+2. Test with different image types (mobile camera, file upload)
 3. Verify detection results on the annotated images
 4. Test AI providers if API keys are configured
 
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for detailed testing instructions.
+
 ### Deployment
-See DEPLOYMENT.md for detailed deployment instructions. Key platforms:
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment instructions. Key platforms:
 - **Streamlit Community Cloud**: Free tier, recommended for demos
 - **Render**: Free tier with auto-deploy from GitHub
 - **Google Cloud Run**: Production-ready, pay-per-use
@@ -38,7 +42,8 @@ See DEPLOYMENT.md for detailed deployment instructions. Key platforms:
 
 **Main Entry Point**: `app.py`
 - Streamlit web application with mobile-first responsive design
-- Handles image capture (simple camera, enhanced multi-camera, file upload)
+- Single-button photo capture (native camera/gallery on mobile)
+- Auto-analysis workflow (no manual analyze button)
 - Orchestrates analysis pipeline: computer vision → AI analysis (optional) → annotation
 - Manages session state and UI rendering
 - Implements Google Drive sharing functionality
@@ -51,7 +56,7 @@ Three core computer vision classes:
 
 **AI Providers**: `services/ai_providers.py`
 - `AIProvider`: Base class for external AI analysis
-- `OpenAIProvider`: GPT-4V integration for professional building inspection analysis
+- `OpenAIProvider`: GPT-4o Vision integration for professional building inspection analysis
 - `GeminiProvider`: Google Gemini 2.5 Flash integration
 - Both providers encode images to base64, send structured prompts, and parse professional assessments
 
@@ -60,13 +65,14 @@ Three core computer vision classes:
 - Creates folders, uploads images/reports, generates shareable links
 - Supports both Streamlit secrets and credentials file initialization
 
-**Camera Component**: `components/camera_selector.py`
-- Custom Streamlit component with HTML/JavaScript
-- Enumerates available cameras (front/back on mobile, integrated/external on desktop)
-- Captures high-resolution images with camera metadata
-- Uses bidirectional communication between JavaScript and Python via postMessage
-
 ### Key Design Patterns
+
+**Mobile-First Design**:
+- Single photo button using `st.file_uploader` (triggers native camera/gallery on mobile)
+- Auto-analysis on image upload (hash-based duplicate detection)
+- Large touch targets (minimum 3rem height)
+- Centered layout for better mobile viewing
+- Minimal options, progressive disclosure
 
 **Error Handling Strategy**:
 - All detection methods use try/except with safe fallback values
@@ -75,17 +81,19 @@ Three core computer vision classes:
 - Dimension mismatches are handled with automatic resizing
 
 **Session State Management**:
-- `st.session_state` stores captured images, analysis results, API keys, camera info
-- Enables multi-step workflows (capture → analyze → save/share)
+- `st.session_state` stores captured images, analysis results, API keys
+- Hash-based image change detection prevents unnecessary re-analysis
+- Clear state on "Take Another Photo"
 - Prevents re-running expensive operations on page refreshes
 
 **Analysis Pipeline**:
-1. Image capture (camera or upload)
-2. Basic computer vision analysis (always runs, provides metrics)
-3. Optional AI analysis (requires API key, enhances basic results)
-4. Annotation overlay creation (layers crack/nail pop/color overlays)
-5. Results display with metrics and recommendations
-6. Save/share functionality (Google Drive or local download)
+1. Image upload (native camera or file picker)
+2. Auto-detection of new image (hash comparison)
+3. Basic computer vision analysis (always runs, provides metrics)
+4. Optional AI analysis (requires API key, enhances basic results)
+5. Annotation overlay creation (layers crack/nail pop/color overlays)
+6. Results display with metrics and recommendations
+7. Download or Google Drive sharing
 
 ## Important Implementation Details
 
@@ -105,10 +113,10 @@ Three core computer vision classes:
 
 ### Mobile Optimization
 - CSS media queries for responsive design at 768px breakpoint
-- PWA-style app header and styling
-- Touch-optimized controls (larger buttons, min-height 3rem)
-- Camera component auto-selects back camera on mobile devices
-- Resolution detection with quality recommendations (8MP+ excellent, 4-8MP good)
+- Large buttons (56px height) for easy tapping
+- Native file uploader provides camera/gallery choice on mobile
+- Auto-analysis eliminates manual button tap
+- Simplified UI with AI selection at top
 
 ### Google Drive Integration
 - Service account authentication (not OAuth user flow)
@@ -116,6 +124,11 @@ Three core computer vision classes:
 - Uploads 3 files: original image, annotated image, JSON report
 - Sets public permissions for sharing with contractors
 - Graceful degradation to local download if Drive unavailable
+
+### JSON Serialization
+- Helper function `convert_to_serializable()` converts NumPy types to native Python types
+- Required for saving reports with OpenCV detection results
+- Handles int64, float64, and ndarray types
 
 ## Common Workflows
 
@@ -132,37 +145,43 @@ Three core computer vision classes:
 1. Create new class inheriting from `AIProvider` in `services/ai_providers.py`
 2. Implement `encode_image()` for provider's format requirements
 3. Implement `analyze_wall_image()` with provider-specific API calls
-4. Add provider to `get_available_providers()` function
-5. Update UI in `app.py` to include new provider option
-6. Add API key input field in AI Analysis Settings expander
+4. Add provider to UI selection in `app.py`
+5. Add API key input field
 
-### Modifying the Camera Component
-1. Edit HTML/JavaScript in `components/camera_selector.py`
-2. Update `enumerateCameras()` for camera detection logic
-3. Modify `startCamera()` constraints for resolution/quality changes
-4. Update `captureData` structure if adding new metadata
-5. Adjust `process_camera_result()` to handle new data fields
-6. Test on both mobile and desktop browsers
+### Modifying the UI/UX
+1. Maintain mobile-first approach (test on mobile first)
+2. Use large touch targets (minimum 3rem)
+3. Keep auto-analysis workflow (avoid manual buttons)
+4. Test on various screen sizes using browser DevTools
+5. Ensure responsive design works 320px to 1920px
 
 ## Configuration Files
 
 - `pyproject.toml`: Python package metadata and dependencies (UV format)
 - `uv.lock`: Locked dependency versions for reproducible builds
+- `requirements.txt`: Cloud deployment dependencies (uses opencv-python-headless)
 - `.streamlit/secrets.toml`: Google Drive credentials and API keys (not in repo)
-- `credentials.json`: Alternative Google Drive credentials file (not in repo)
+- `.streamlit/secrets.toml.template`: Template for secrets configuration
 
 ## API Key Management
 
 The app supports three analysis modes:
 1. **Basic Computer Vision** (default, no API key required)
-2. **OpenAI GPT-4V** (requires OpenAI API key from platform.openai.com)
+2. **OpenAI GPT-4o Vision** (requires OpenAI API key from platform.openai.com)
 3. **Google Gemini 2.5 Flash** (requires Gemini API key from aistudio.google.com)
 
-API keys are stored in `st.session_state` and never persisted. Users enter them via expanders in the UI. For deployment, consider using Streamlit secrets for pre-configured keys.
+API keys are stored in `st.session_state` and never persisted. Users enter them via UI inputs. For deployment, configure keys in Streamlit secrets.
+
+## Documentation
+
+Project documentation is organized in the `docs/` folder:
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**: Deployment guide for all platforms
+- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: Local development and testing guide
+- **[docs/CHANGELOG.md](docs/CHANGELOG.md)**: Version history and migration notes
 
 ## Known Limitations
 
-- Enhanced camera component is experimental and may fail on some browsers
+- Native camera access requires HTTPS (local testing may need workarounds)
 - Nail pop detection has false positives on textured walls
 - Color analysis thresholds tuned for white/light-colored walls
 - Google Drive requires service account setup (not user OAuth)
@@ -172,8 +191,9 @@ API keys are stored in `st.session_state` and never persisted. Users enter them 
 
 Core libraries:
 - **streamlit**: Web framework and UI components
-- **opencv-python**: Computer vision algorithms (Canny, Hough, morphological ops)
+- **opencv-python**: Computer vision algorithms (local dev)
+- **opencv-python-headless**: Computer vision (cloud deployment)
 - **pillow**: Image handling and conversions
 - **numpy**: Array operations and image data
-- **google-api-python-client**: Google Drive API integration
+- **google-api-python-client**: Google Drive API integration (optional)
 - **requests**: HTTP client for AI provider APIs
