@@ -306,16 +306,50 @@ class ColorAnalyzer:
         
         overlay = image.copy()
         
-        # Blue overlay for dark areas (water damage)
-        if color_results['dark_areas'] is not None:
-            blue_mask = np.zeros_like(overlay)
-            blue_mask[color_results['dark_areas']] = [0, 0, 255]
-            overlay = cv2.addWeighted(overlay, 0.8, blue_mask, 0.2, 0)
+        try:
+            # Blue overlay for dark areas (water damage)
+            if color_results['dark_areas'] is not None:
+                dark_areas = color_results['dark_areas']
+                
+                # Check if dimensions match
+                if dark_areas.shape[:2] == overlay.shape[:2]:
+                    blue_mask = np.zeros_like(overlay)
+                    blue_mask[dark_areas] = [0, 0, 255]
+                    overlay = cv2.addWeighted(overlay, 0.8, blue_mask, 0.2, 0)
+                else:
+                    # Resize mask to match current image
+                    dark_areas_resized = cv2.resize(
+                        dark_areas.astype(np.uint8), 
+                        (overlay.shape[1], overlay.shape[0]), 
+                        interpolation=cv2.INTER_NEAREST
+                    ).astype(bool)
+                    blue_mask = np.zeros_like(overlay)
+                    blue_mask[dark_areas_resized] = [0, 0, 255]
+                    overlay = cv2.addWeighted(overlay, 0.8, blue_mask, 0.2, 0)
+            
+            # Yellow overlay for color inconsistencies
+            if color_results['unusual_saturation'] is not None:
+                unusual_saturation = color_results['unusual_saturation']
+                
+                # Check if dimensions match
+                if unusual_saturation.shape[:2] == overlay.shape[:2]:
+                    yellow_mask = np.zeros_like(overlay)
+                    yellow_mask[unusual_saturation] = [255, 255, 0]
+                    overlay = cv2.addWeighted(overlay, 0.8, yellow_mask, 0.2, 0)
+                else:
+                    # Resize mask to match current image
+                    unusual_saturation_resized = cv2.resize(
+                        unusual_saturation.astype(np.uint8), 
+                        (overlay.shape[1], overlay.shape[0]), 
+                        interpolation=cv2.INTER_NEAREST
+                    ).astype(bool)
+                    yellow_mask = np.zeros_like(overlay)
+                    yellow_mask[unusual_saturation_resized] = [255, 255, 0]
+                    overlay = cv2.addWeighted(overlay, 0.8, yellow_mask, 0.2, 0)
         
-        # Yellow overlay for color inconsistencies
-        if color_results['unusual_saturation'] is not None:
-            yellow_mask = np.zeros_like(overlay)
-            yellow_mask[color_results['unusual_saturation']] = [255, 255, 0]
-            overlay = cv2.addWeighted(overlay, 0.8, yellow_mask, 0.2, 0)
+        except Exception as e:
+            # If overlay creation fails, return original image
+            print(f"Warning: Could not create color overlay: {e}")
+            return overlay
         
         return overlay

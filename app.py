@@ -213,21 +213,36 @@ def analyze_wall_image(image):
 
 def create_comprehensive_annotation(image, crack_results, nail_pop_results, color_results):
     """Create comprehensive annotated image with all detected issues"""
-    models = load_detection_models()
+    try:
+        models = load_detection_models()
+        
+        # Start with original image
+        annotated = np.array(image).copy()
+        
+        # Add color overlays first (as background) - with error handling
+        try:
+            annotated = models['color_analyzer'].create_color_overlay(annotated, color_results)
+        except Exception as e:
+            print(f"Warning: Color overlay failed: {e}")
+        
+        # Add crack annotations - with error handling
+        try:
+            annotated = models['crack_detector'].draw_cracks(annotated, crack_results)
+        except Exception as e:
+            print(f"Warning: Crack annotation failed: {e}")
+        
+        # Add nail pop annotations - with error handling
+        try:
+            annotated = models['nail_pop_detector'].draw_nail_pops(annotated, nail_pop_results)
+        except Exception as e:
+            print(f"Warning: Nail pop annotation failed: {e}")
+        
+        return annotated
     
-    # Start with original image
-    annotated = np.array(image).copy()
-    
-    # Add color overlays first (as background)
-    annotated = models['color_analyzer'].create_color_overlay(annotated, color_results)
-    
-    # Add crack annotations
-    annotated = models['crack_detector'].draw_cracks(annotated, crack_results)
-    
-    # Add nail pop annotations
-    annotated = models['nail_pop_detector'].draw_nail_pops(annotated, nail_pop_results)
-    
-    return annotated
+    except Exception as e:
+        # If all annotation fails, return original image
+        print(f"Error: Annotation creation failed: {e}")
+        return np.array(image)
 
 def main():
     # Mobile-optimized header
