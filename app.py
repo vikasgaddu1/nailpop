@@ -305,7 +305,7 @@ def main():
             [
                 "🔧 Basic Computer Vision (Free)",
                 "🤖 OpenAI GPT-4V (Requires API Key)",
-                "🔮 Google Gemini Pro Vision (Requires API Key)"
+                "🔮 Google Gemini 1.5 Flash (Requires API Key)"
             ],
             key="analysis_mode_radio",
             help="Basic analysis is free but limited. AI models provide professional-grade analysis."
@@ -315,7 +315,7 @@ def main():
         if analysis_mode.startswith("🤖"):
             st.session_state.ai_analysis_mode = "OpenAI GPT-4V"
         elif analysis_mode.startswith("🔮"):
-            st.session_state.ai_analysis_mode = "Google Gemini Pro Vision"
+            st.session_state.ai_analysis_mode = "Google Gemini 1.5 Flash"
         else:
             st.session_state.ai_analysis_mode = "Basic Computer Vision"
         
@@ -337,22 +337,22 @@ def main():
             else:
                 st.warning("⚠️ Please enter your OpenAI API key to use GPT-4V analysis")
         
-        elif st.session_state.ai_analysis_mode == "Google Gemini Pro Vision":
+        elif st.session_state.ai_analysis_mode == "Google Gemini 1.5 Flash":
             st.markdown("#### 🔑 Google Gemini Configuration")
             gemini_key = st.text_input(
                 "Gemini API Key:",
                 type="password",
                 value=st.session_state.gemini_api_key,
-                help="Get your API key from https://makersuite.google.com/app/apikey",
+                help="Get your API key from https://aistudio.google.com/app/apikey",
                 placeholder="AIza..."
             )
             st.session_state.gemini_api_key = gemini_key
             
             if gemini_key:
                 st.success("✅ Gemini API key configured")
-                st.info("💡 **Gemini Benefits**: Advanced visual analysis, detailed damage assessment, practical repair advice")
+                st.info("💡 **Gemini 1.5 Flash Benefits**: Fast, advanced visual analysis with detailed damage assessment and practical repair advice")
             else:
-                st.warning("⚠️ Please enter your Gemini API key to use Gemini Pro Vision analysis")
+                st.warning("⚠️ Please enter your Gemini API key to use Gemini 1.5 Flash analysis")
         
         else:
             st.info("🔧 **Basic Analysis**: Uses computer vision algorithms for crack, nail pop, and color analysis. Free but limited compared to AI models.")
@@ -464,7 +464,7 @@ def main():
         analysis_button_text = {
             'Basic Computer Vision': '🔍 Analyze Wall Defects (Basic)',
             'OpenAI GPT-4V': '🤖 Analyze with GPT-4V (Professional)',
-            'Google Gemini Pro Vision': '🔮 Analyze with Gemini Pro Vision'
+            'Google Gemini 1.5 Flash': '🔮 Analyze with Gemini 1.5 Flash'
         }
         
         button_text = analysis_button_text.get(st.session_state.ai_analysis_mode, '🔍 Analyze Wall Defects')
@@ -477,7 +477,7 @@ def main():
             if st.session_state.ai_analysis_mode == "OpenAI GPT-4V" and not st.session_state.openai_api_key:
                 can_analyze = False
                 error_message = "Please configure your OpenAI API key in the AI Analysis Settings above."
-            elif st.session_state.ai_analysis_mode == "Google Gemini Pro Vision" and not st.session_state.gemini_api_key:
+            elif st.session_state.ai_analysis_mode == "Google Gemini 1.5 Flash" and not st.session_state.gemini_api_key:
                 can_analyze = False
                 error_message = "Please configure your Gemini API key in the AI Analysis Settings above."
             
@@ -485,20 +485,39 @@ def main():
                 st.error(f"❌ {error_message}")
             else:
                 with st.spinner(f"Analyzing image with {st.session_state.ai_analysis_mode}..."):
-                    # Perform basic computer vision analysis first
-                    crack_results, nail_pop_results, color_results = analyze_wall_image(image)
-                    
-                    # Create basic analysis summary
-                    basic_analysis = {
-                        'cracks': crack_results['count'],
-                        'crack_severity': crack_results['severity'],
-                        'crack_length': crack_results['total_length'],
-                        'nail_pops': nail_pop_results['count'],
-                        'nail_pop_severity': nail_pop_results['severity'],
-                        'water_damage_pixels': color_results['water_damage_pixels'],
-                        'color_inconsistency_pixels': color_results['color_inconsistency_pixels'],
-                        'color_severity': color_results['severity']
-                    }
+                    # Perform basic computer vision analysis first with error handling
+                    try:
+                        crack_results, nail_pop_results, color_results = analyze_wall_image(image)
+                        
+                        # Create basic analysis summary with safe defaults
+                        basic_analysis = {
+                            'cracks': max(0, crack_results.get('count', 0)),
+                            'crack_severity': crack_results.get('severity', 'None'),
+                            'crack_length': max(0, crack_results.get('total_length', 0)),
+                            'nail_pops': max(0, nail_pop_results.get('count', 0)),
+                            'nail_pop_severity': nail_pop_results.get('severity', 'None'),
+                            'water_damage_pixels': max(0, color_results.get('water_damage_pixels', 0)),
+                            'color_inconsistency_pixels': max(0, color_results.get('color_inconsistency_pixels', 0)),
+                            'color_severity': color_results.get('severity', 'None')
+                        }
+                        
+                    except Exception as e:
+                        st.error(f"⚠️ Basic analysis encountered an issue: {str(e)}")
+                        # Provide safe fallback values
+                        crack_results = {'count': 0, 'severity': 'None', 'total_length': 0, 'contours': []}
+                        nail_pop_results = {'count': 0, 'severity': 'None', 'circles': []}
+                        color_results = {'water_damage_pixels': 0, 'color_inconsistency_pixels': 0, 'severity': 'None', 'dark_areas': None, 'unusual_saturation': None}
+                        
+                        basic_analysis = {
+                            'cracks': 0,
+                            'crack_severity': 'None',
+                            'crack_length': 0,
+                            'nail_pops': 0,
+                            'nail_pop_severity': 'None',
+                            'water_damage_pixels': 0,
+                            'color_inconsistency_pixels': 0,
+                            'color_severity': 'None'
+                        }
                     
                     # Enhanced AI analysis if selected
                     ai_analysis = None
@@ -513,8 +532,8 @@ def main():
                             # Select the appropriate provider
                             if st.session_state.ai_analysis_mode == "OpenAI GPT-4V" and "OpenAI GPT-4V" in providers:
                                 ai_analysis = analyze_with_ai(providers["OpenAI GPT-4V"], image, basic_analysis)
-                            elif st.session_state.ai_analysis_mode == "Google Gemini Pro Vision" and "Google Gemini Pro Vision" in providers:
-                                ai_analysis = analyze_with_ai(providers["Google Gemini Pro Vision"], image, basic_analysis)
+                            elif st.session_state.ai_analysis_mode == "Google Gemini 1.5 Flash" and "Google Gemini 1.5 Flash" in providers:
+                                ai_analysis = analyze_with_ai(providers["Google Gemini 1.5 Flash"], image, basic_analysis)
                                 
                         except Exception as e:
                             st.error(f"AI analysis failed: {str(e)}")

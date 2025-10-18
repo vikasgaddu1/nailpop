@@ -35,14 +35,27 @@ class OpenAIProvider(AIProvider):
     
     def encode_image(self, image: Image.Image) -> str:
         """Encode PIL image to base64"""
-        buffer = io.BytesIO()
-        # Resize image to reduce API costs
-        max_size = 1024
-        if max(image.size) > max_size:
-            image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-        
-        image.save(buffer, format="JPEG", quality=85)
-        return base64.b64encode(buffer.getvalue()).decode()
+        try:
+            buffer = io.BytesIO()
+            
+            # Ensure image is in RGB mode
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            
+            # Resize image to reduce API costs and ensure valid dimensions
+            max_size = 1024
+            if max(image.size) > max_size:
+                image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+            
+            # Ensure minimum size to avoid API issues
+            if min(image.size) < 32:
+                image = image.resize((max(32, image.size[0]), max(32, image.size[1])), Image.Resampling.LANCZOS)
+            
+            image.save(buffer, format="JPEG", quality=85)
+            return base64.b64encode(buffer.getvalue()).decode()
+            
+        except Exception as e:
+            raise ValueError(f"Failed to encode image: {str(e)}")
     
     def analyze_wall_image(self, image: Image.Image, basic_analysis: Dict) -> Dict:
         """Analyze wall image using GPT-4V"""
@@ -150,39 +163,72 @@ Be thorough but practical in your assessment."""
     
     def create_basic_summary(self, basic_analysis: Dict) -> str:
         """Create a summary of basic computer vision analysis"""
-        summary = []
-        
-        if basic_analysis.get('cracks', 0) > 0:
-            summary.append(f"- {basic_analysis['cracks']} potential cracks detected")
-        
-        if basic_analysis.get('nail_pops', 0) > 0:
-            summary.append(f"- {basic_analysis['nail_pops']} potential nail pops detected")
-        
-        if basic_analysis.get('water_damage_pixels', 0) > 1000:
-            summary.append(f"- {basic_analysis['water_damage_pixels']:,} pixels showing potential water damage")
-        
-        if basic_analysis.get('color_inconsistency_pixels', 0) > 2000:
-            summary.append(f"- {basic_analysis['color_inconsistency_pixels']:,} pixels with color inconsistencies")
-        
-        return '\n'.join(summary) if summary else "- No significant issues detected by computer vision"
+        try:
+            summary = []
+            
+            # Safely extract values with defaults and validation
+            cracks = max(0, int(basic_analysis.get('cracks', 0)))
+            if cracks > 0:
+                summary.append(f"- {cracks} potential cracks detected")
+            
+            nail_pops = max(0, int(basic_analysis.get('nail_pops', 0)))
+            if nail_pops > 0:
+                summary.append(f"- {nail_pops} potential nail pops detected")
+            
+            water_damage_pixels = max(0, int(basic_analysis.get('water_damage_pixels', 0)))
+            if water_damage_pixels > 1000:
+                summary.append(f"- {water_damage_pixels:,} pixels showing potential water damage")
+            
+            color_inconsistency_pixels = max(0, int(basic_analysis.get('color_inconsistency_pixels', 0)))
+            if color_inconsistency_pixels > 2000:
+                summary.append(f"- {color_inconsistency_pixels:,} pixels with color inconsistencies")
+            
+            # Add severity information if available
+            if basic_analysis.get('crack_severity') and basic_analysis['crack_severity'] != 'None':
+                summary.append(f"- Crack severity: {basic_analysis['crack_severity']}")
+            
+            if basic_analysis.get('nail_pop_severity') and basic_analysis['nail_pop_severity'] != 'None':
+                summary.append(f"- Nail pop severity: {basic_analysis['nail_pop_severity']}")
+            
+            if basic_analysis.get('color_severity') and basic_analysis['color_severity'] != 'None':
+                summary.append(f"- Color issue severity: {basic_analysis['color_severity']}")
+            
+            return '\n'.join(summary) if summary else "- No significant issues detected by computer vision"
+            
+        except Exception as e:
+            # If basic analysis summary creation fails, provide a safe fallback
+            return f"- Basic computer vision analysis completed (details unavailable due to processing error: {str(e)})"
 
 class GeminiProvider(AIProvider):
     """Google Gemini provider for wall damage analysis"""
     
     def __init__(self, api_key: str):
         super().__init__(api_key)
-        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent"
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     
     def encode_image(self, image: Image.Image) -> str:
         """Encode PIL image to base64"""
-        buffer = io.BytesIO()
-        # Resize image to reduce API costs
-        max_size = 1024
-        if max(image.size) > max_size:
-            image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-        
-        image.save(buffer, format="JPEG", quality=85)
-        return base64.b64encode(buffer.getvalue()).decode()
+        try:
+            buffer = io.BytesIO()
+            
+            # Ensure image is in RGB mode
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            
+            # Resize image to reduce API costs and ensure valid dimensions
+            max_size = 1024
+            if max(image.size) > max_size:
+                image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+            
+            # Ensure minimum size to avoid API issues
+            if min(image.size) < 32:
+                image = image.resize((max(32, image.size[0]), max(32, image.size[1])), Image.Resampling.LANCZOS)
+            
+            image.save(buffer, format="JPEG", quality=85)
+            return base64.b64encode(buffer.getvalue()).decode()
+            
+        except Exception as e:
+            raise ValueError(f"Failed to encode image: {str(e)}")
     
     def analyze_wall_image(self, image: Image.Image, basic_analysis: Dict) -> Dict:
         """Analyze wall image using Gemini Pro Vision"""
@@ -245,7 +291,7 @@ Provide practical, actionable advice for homeowners."""
             content = result['candidates'][0]['content']['parts'][0]['text']
             
             return {
-                'provider': 'Google Gemini Pro Vision',
+                'provider': 'Google Gemini 1.5 Flash',
                 'success': True,
                 'professional_notes': content,
                 'overall_condition': 'Analyzed',
@@ -255,34 +301,54 @@ Provide practical, actionable advice for homeowners."""
                 
         except requests.exceptions.RequestException as e:
             return {
-                'provider': 'Google Gemini Pro Vision',
+                'provider': 'Google Gemini 1.5 Flash',
                 'success': False,
                 'error': f"API request failed: {str(e)}"
             }
         except Exception as e:
             return {
-                'provider': 'Google Gemini Pro Vision',
+                'provider': 'Google Gemini 1.5 Flash',
                 'success': False,
                 'error': f"Analysis failed: {str(e)}"
             }
     
     def create_basic_summary(self, basic_analysis: Dict) -> str:
         """Create a summary of basic computer vision analysis"""
-        summary = []
-        
-        if basic_analysis.get('cracks', 0) > 0:
-            summary.append(f"- {basic_analysis['cracks']} potential cracks detected")
-        
-        if basic_analysis.get('nail_pops', 0) > 0:
-            summary.append(f"- {basic_analysis['nail_pops']} potential nail pops detected")
-        
-        if basic_analysis.get('water_damage_pixels', 0) > 1000:
-            summary.append(f"- Water damage indicators in {basic_analysis['water_damage_pixels']:,} pixels")
-        
-        if basic_analysis.get('color_inconsistency_pixels', 0) > 2000:
-            summary.append(f"- Color variations in {basic_analysis['color_inconsistency_pixels']:,} pixels")
-        
-        return '\n'.join(summary) if summary else "- No significant issues detected by computer vision"
+        try:
+            summary = []
+            
+            # Safely extract values with defaults and validation
+            cracks = max(0, int(basic_analysis.get('cracks', 0)))
+            if cracks > 0:
+                summary.append(f"- {cracks} potential cracks detected")
+            
+            nail_pops = max(0, int(basic_analysis.get('nail_pops', 0)))
+            if nail_pops > 0:
+                summary.append(f"- {nail_pops} potential nail pops detected")
+            
+            water_damage_pixels = max(0, int(basic_analysis.get('water_damage_pixels', 0)))
+            if water_damage_pixels > 1000:
+                summary.append(f"- Water damage indicators in {water_damage_pixels:,} pixels")
+            
+            color_inconsistency_pixels = max(0, int(basic_analysis.get('color_inconsistency_pixels', 0)))
+            if color_inconsistency_pixels > 2000:
+                summary.append(f"- Color variations in {color_inconsistency_pixels:,} pixels")
+            
+            # Add severity information if available
+            if basic_analysis.get('crack_severity') and basic_analysis['crack_severity'] != 'None':
+                summary.append(f"- Crack severity: {basic_analysis['crack_severity']}")
+            
+            if basic_analysis.get('nail_pop_severity') and basic_analysis['nail_pop_severity'] != 'None':
+                summary.append(f"- Nail pop severity: {basic_analysis['nail_pop_severity']}")
+            
+            if basic_analysis.get('color_severity') and basic_analysis['color_severity'] != 'None':
+                summary.append(f"- Color issue severity: {basic_analysis['color_severity']}")
+            
+            return '\n'.join(summary) if summary else "- No significant issues detected by computer vision"
+            
+        except Exception as e:
+            # If basic analysis summary creation fails, provide a safe fallback
+            return f"- Basic computer vision analysis completed (details unavailable due to processing error: {str(e)})"
 
 def get_available_providers(openai_key: str = None, gemini_key: str = None) -> Dict[str, AIProvider]:
     """Get available AI providers based on provided API keys"""
@@ -292,7 +358,7 @@ def get_available_providers(openai_key: str = None, gemini_key: str = None) -> D
         providers['OpenAI GPT-4V'] = OpenAIProvider(openai_key)
     
     if gemini_key:
-        providers['Google Gemini Pro Vision'] = GeminiProvider(gemini_key)
+        providers['Google Gemini 1.5 Flash'] = GeminiProvider(gemini_key)
     
     return providers
 
