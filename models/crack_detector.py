@@ -10,8 +10,8 @@ import streamlit as st
 
 class CrackDetector:
     def __init__(self):
-        self.min_crack_area = 50
-        self.min_aspect_ratio = 3
+        self.min_crack_area = 20  # Reduced for better sensitivity
+        self.min_aspect_ratio = 2  # Reduced to detect more crack-like features
         self.canny_low = 50
         self.canny_high = 150
         self.gaussian_kernel = 5
@@ -83,8 +83,8 @@ class CrackDetector:
                     # Compactness measure (4π*area/perimeter²)
                     compactness = 4 * np.pi * area / (perimeter * perimeter)
                     
-                    # Cracks typically have low compactness
-                    if compactness < 0.3:
+                    # Cracks typically have low compactness - relaxed threshold
+                    if compactness < 0.4:  # Increased from 0.3 for better detection
                         crack_contours.append(contour)
         
         return crack_contours
@@ -129,15 +129,41 @@ class CrackDetector:
         else:
             return "Minor"
     
-    def draw_cracks(self, image, crack_results, color=(255, 0, 0), thickness=2):
-        """Draw detected cracks on the image"""
+    def draw_cracks(self, image, crack_results, color=(0, 0, 255), thickness=3):
+        """Draw detected cracks on the image
+        Note: OpenCV uses BGR format, so (0, 0, 255) is red
+        """
         if isinstance(image, Image.Image):
             image = np.array(image)
         
         result_image = image.copy()
         
-        if crack_results['contours']:
+        if crack_results.get('contours') and len(crack_results['contours']) > 0:
+            # Ensure we're working with BGR format for OpenCV
+            if len(result_image.shape) == 2:
+                # Convert grayscale to BGR
+                result_image = cv2.cvtColor(result_image, cv2.COLOR_GRAY2BGR)
+            elif result_image.shape[2] == 4:
+                # Convert RGBA to BGR
+                result_image = cv2.cvtColor(result_image, cv2.COLOR_RGBA2BGR)
+            elif result_image.shape[2] == 3:
+                # Assume it's RGB, convert to BGR for OpenCV
+                result_image = cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR)
+            
+            # Draw contours in red
             cv2.drawContours(result_image, crack_results['contours'], -1, color, thickness)
+            
+            # Add circles at contour endpoints for visibility
+            for contour in crack_results['contours']:
+                if len(contour) > 0:
+                    # Draw a small circle at the start and end of each contour
+                    start_point = tuple(contour[0][0])
+                    end_point = tuple(contour[-1][0])
+                    cv2.circle(result_image, start_point, 5, color, -1)
+                    cv2.circle(result_image, end_point, 5, color, -1)
+            
+            # Convert back to RGB for display
+            result_image = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
         
         return result_image
 
@@ -224,16 +250,36 @@ class NailPopDetector:
             return "Minor"
     
     def draw_nail_pops(self, image, nail_pop_results, color=(0, 255, 0), thickness=3):
-        """Draw detected nail pops on the image"""
+        """Draw detected nail pops on the image
+        Note: OpenCV uses BGR format, so (0, 255, 0) is green
+        """
         if isinstance(image, Image.Image):
             image = np.array(image)
         
         result_image = image.copy()
         
-        for circle in nail_pop_results['circles']:
-            x, y, r = circle
-            cv2.circle(result_image, (x, y), r, color, thickness)
-            cv2.circle(result_image, (x, y), 2, color, thickness)
+        if nail_pop_results.get('circles') is not None and len(nail_pop_results['circles']) > 0:
+            # Ensure we're working with BGR format for OpenCV
+            if len(result_image.shape) == 2:
+                # Convert grayscale to BGR
+                result_image = cv2.cvtColor(result_image, cv2.COLOR_GRAY2BGR)
+            elif result_image.shape[2] == 4:
+                # Convert RGBA to BGR
+                result_image = cv2.cvtColor(result_image, cv2.COLOR_RGBA2BGR)
+            elif result_image.shape[2] == 3:
+                # Assume it's RGB, convert to BGR for OpenCV
+                result_image = cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR)
+            
+            for circle in nail_pop_results['circles']:
+                x, y, r = circle
+                # Draw circle with thicker line
+                cv2.circle(result_image, (x, y), r, color, thickness)
+                # Add a cross in the center for better visibility
+                cv2.line(result_image, (x-5, y), (x+5, y), color, thickness)
+                cv2.line(result_image, (x, y-5), (x, y+5), color, thickness)
+            
+            # Convert back to RGB for display
+            result_image = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
         
         return result_image
 
