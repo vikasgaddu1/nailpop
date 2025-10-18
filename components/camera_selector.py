@@ -438,18 +438,29 @@ def camera_selector():
                 // Convert to base64
                 const imageData = canvas.toDataURL('image/png');
                 
-                // Send to Streamlit
+                // Send to Streamlit with timestamp to ensure uniqueness
+                const captureData = {
+                    image: imageData,
+                    camera: {
+                        name: currentCameraName.textContent,
+                        resolution: currentResolution.textContent,
+                        facing: currentFacing.textContent
+                    },
+                    timestamp: Date.now(),
+                    captured: true
+                };
+                
+                console.log('Sending capture data to Streamlit:', captureData);
+                
                 window.parent.postMessage({
                     type: 'streamlit:componentValue',
-                    value: {
-                        image: imageData,
-                        camera: {
-                            name: currentCameraName.textContent,
-                            resolution: currentResolution.textContent,
-                            facing: currentFacing.textContent
-                        }
-                    }
+                    value: captureData
                 }, '*');
+                
+                // Also try the alternative method
+                if (window.parent.Streamlit) {
+                    window.parent.Streamlit.setComponentValue(captureData);
+                }
                 
                 // Show retake button
                 captureBtn.style.display = 'none';

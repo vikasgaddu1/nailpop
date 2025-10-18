@@ -291,25 +291,42 @@ def main():
         # Enhanced camera selector
         camera_result = camera_selector()
         
+        # Debug: Show what we received
+        if camera_result:
+            st.write("Debug - Camera result type:", type(camera_result))
+            if isinstance(camera_result, dict):
+                st.write("Debug - Camera result keys:", list(camera_result.keys()))
+        
         # Process camera result if it's valid
-        if camera_result and isinstance(camera_result, dict):
+        if camera_result and isinstance(camera_result, dict) and 'captured' in camera_result:
             image, camera_info = process_camera_result(camera_result)
             if image:
-                st.session_state.captured_image = image
-                st.session_state.camera_info = camera_info
-                uploaded_file = "camera_capture"  # Flag to indicate camera capture
+                # Check if this is a new capture using timestamp
+                current_timestamp = camera_result.get('timestamp', 0)
+                last_timestamp = getattr(st.session_state, 'last_capture_timestamp', 0)
                 
-                st.success("📸 Photo captured successfully!")
-                
-                # Show camera info
-                if camera_info:
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("📷 Camera", camera_info.get('name', 'Unknown'))
-                    with col2:
-                        st.metric("📐 Resolution", camera_info.get('resolution', 'Unknown'))
-                    with col3:
-                        st.metric("📱 Facing", camera_info.get('facing', 'Unknown'))
+                if current_timestamp > last_timestamp:
+                    st.session_state.captured_image = image
+                    st.session_state.camera_info = camera_info
+                    st.session_state.last_capture_timestamp = current_timestamp
+                    st.session_state.analysis_complete = False  # Reset analysis state
+                    uploaded_file = "camera_capture"  # Flag to indicate camera capture
+                    
+                    st.success("📸 Photo captured successfully!")
+                    
+                    # Show camera info
+                    if camera_info:
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("📷 Camera", camera_info.get('name', 'Unknown'))
+                        with col2:
+                            st.metric("📐 Resolution", camera_info.get('resolution', 'Unknown'))
+                        with col3:
+                            st.metric("📱 Facing", camera_info.get('facing', 'Unknown'))
+                else:
+                    # Use existing captured image if we have one
+                    if st.session_state.captured_image is not None:
+                        uploaded_file = "camera_capture"
         
         # Check if we have a previously captured image
         elif st.session_state.captured_image is not None:
