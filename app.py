@@ -291,12 +291,15 @@ def main():
         # Enhanced camera selector
         camera_result = camera_selector()
         
-        if camera_result:
+        # Process camera result if it's valid
+        if camera_result and isinstance(camera_result, dict):
             image, camera_info = process_camera_result(camera_result)
             if image:
                 st.session_state.captured_image = image
                 st.session_state.camera_info = camera_info
                 uploaded_file = "camera_capture"  # Flag to indicate camera capture
+                
+                st.success("📸 Photo captured successfully!")
                 
                 # Show camera info
                 if camera_info:
@@ -307,6 +310,17 @@ def main():
                         st.metric("📐 Resolution", camera_info.get('resolution', 'Unknown'))
                     with col3:
                         st.metric("📱 Facing", camera_info.get('facing', 'Unknown'))
+        
+        # Check if we have a previously captured image
+        elif st.session_state.captured_image is not None:
+            uploaded_file = "camera_capture"  # Use previously captured image
+            st.info("📸 Using previously captured image. Capture a new photo above to replace it.")
+            
+            if st.button("🗑️ Clear Captured Image", key="clear_image"):
+                st.session_state.captured_image = None
+                st.session_state.camera_info = {}
+                st.session_state.analysis_complete = False
+                st.rerun()
     
     elif camera_mode == "📱 Simple Camera":
         st.markdown("#### 📱 Simple Camera Capture")

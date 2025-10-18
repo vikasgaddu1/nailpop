@@ -459,14 +459,19 @@ def process_camera_result(camera_data):
     Process the camera result from the JavaScript component
     Returns PIL Image object
     """
-    if camera_data and 'image' in camera_data:
-        # Remove data URL prefix
-        image_data = camera_data['image'].split(',')[1]
-        
-        # Decode base64 to image
-        image_bytes = base64.b64decode(image_data)
-        image = Image.open(io.BytesIO(image_bytes))
-        
-        return image, camera_data.get('camera', {})
+    # Check if camera_data is valid and is a dictionary
+    if camera_data and isinstance(camera_data, dict) and 'image' in camera_data:
+        try:
+            # Remove data URL prefix
+            image_data = camera_data['image'].split(',')[1]
+            
+            # Decode base64 to image
+            image_bytes = base64.b64decode(image_data)
+            image = Image.open(io.BytesIO(image_bytes))
+            
+            return image, camera_data.get('camera', {})
+        except Exception as e:
+            st.error(f"Error processing camera image: {str(e)}")
+            return None, None
     
     return None, None
