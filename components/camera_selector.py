@@ -86,10 +86,15 @@ def camera_selector():
             }
             
             .capture-btn:disabled {
-                background: #ccc;
-                cursor: not-allowed;
-                transform: none;
-                box-shadow: none;
+                background: #ccc !important;
+                cursor: not-allowed !important;
+                transform: none !important;
+                box-shadow: none !important;
+                opacity: 0.5 !important;
+            }
+            
+            .capture-btn:not(:disabled) {
+                opacity: 1 !important;
             }
             
             .switch-btn {
@@ -206,7 +211,7 @@ def camera_selector():
             
             <div>
                 <button id="startCamera" class="capture-btn">📷 Start Camera</button>
-                <button id="captureBtn" class="capture-btn" disabled>📸 Capture Photo</button>
+                <button id="captureBtn" class="capture-btn" disabled style="opacity: 0.5;">📸 Capture Photo</button>
                 <button id="retakeBtn" class="capture-btn" style="display: none;">🔄 Retake</button>
             </div>
         </div>
@@ -312,20 +317,32 @@ def camera_selector():
                     });
                     
                     // Set default camera (prefer back camera on mobile)
+                    let defaultCamera = null;
                     if (isMobile) {
-                        const backCamera = cameras.find(camera => 
+                        defaultCamera = cameras.find(camera => 
                             camera.label.toLowerCase().includes('back') || 
                             camera.label.toLowerCase().includes('rear') ||
                             camera.label.toLowerCase().includes('environment')
                         );
-                        if (backCamera) {
-                            cameraSelect.value = backCamera.deviceId;
-                            currentCameraIndex = cameras.indexOf(backCamera);
+                        if (defaultCamera) {
+                            cameraSelect.value = defaultCamera.deviceId;
+                            currentCameraIndex = cameras.indexOf(defaultCamera);
                         }
                     }
                     
-                    showInfo(`✅ Found ${cameras.length} camera(s). ${isMobile ? 'Back camera recommended for better quality.' : 'External cameras typically offer better quality.'}`);
-                    hideMessages();
+                    if (!defaultCamera && cameras.length > 0) {
+                        cameraSelect.value = cameras[0].deviceId;
+                        defaultCamera = cameras[0];
+                    }
+                    
+                    showInfo(`✅ Found ${cameras.length} camera(s). Select a camera and click "Start Camera" to begin. ${isMobile ? 'Back camera recommended for better quality.' : 'External cameras typically offer better quality.'}`);
+                    
+                    // Auto-start the default camera
+                    if (defaultCamera) {
+                        setTimeout(() => {
+                            startCamera(defaultCamera.deviceId);
+                        }, 1000);
+                    }
                     
                 } catch (error) {
                     console.error('Error enumerating cameras:', error);
@@ -366,8 +383,13 @@ def camera_selector():
                     cameraInfo.style.display = 'block';
                     
                     captureBtn.disabled = false;
+                    captureBtn.style.display = 'inline-block';
+                    captureBtn.style.opacity = '1';
                     startCameraBtn.style.display = 'none';
-                    hideMessages();
+                    
+                    // Show success message with capture instruction
+                    showInfo('📷 Camera ready! Click "Capture Photo" button below to take a picture.');
+                    setTimeout(hideMessages, 3000);
                     
                 } catch (error) {
                     console.error('Error starting camera:', error);
@@ -428,7 +450,7 @@ def camera_selector():
             });
             
             cameraSelect.addEventListener('change', (e) => {
-                if (videoStream) {
+                if (e.target.value) {
                     startCamera(e.target.value);
                 }
             });
@@ -475,3 +497,4 @@ def process_camera_result(camera_data):
             return None, None
     
     return None, None
+
